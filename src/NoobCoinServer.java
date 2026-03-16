@@ -94,7 +94,7 @@ public class NoobCoinServer {
         Map<String, String> params = parseQuery(ex.getRequestURI());
         String name   = params.get("name");
         String balStr = params.get("balance");
-        float  bal    = (balStr != null) ? Float.parseFloat(balStr) : 100f;
+        float  bal    = (balStr != null) ? Float.parseFloat(balStr) : 10000f;
 
         if (name == null || name.trim().isEmpty()) {
             sendJson(ex, 400, "{\"success\":false,\"message\":\"Name required\"}");
