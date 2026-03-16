@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>💰 NoobCoin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0e0; }
+
+    header {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      padding: 24px;
+      text-align: center;
+      border-bottom: 2px solid #f0a500;
+    }
+    header h1 { font-size: 2.2rem; color: #f0a500; letter-spacing: 4px; }
+    header p { color: #aaa; margin-top: 6px; font-size: 0.9rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 24px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card h2 { color: #f0a500; margin-bottom: 14px; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
+
+    input, select {
+      width: 100%; padding: 10px; margin: 6px 0 12px;
+      background: #0f0f1a; border: 1px solid #3a3a5a;
+      color: #e0e0e0; border-radius: 6px; font-size: 0.9rem;
+    }
+    button {
+      width: 100%; padding: 11px;
+      background: #f0a500; color: #0f0f1a;
+      border: none; border-radius: 6px;
+      font-weight: bold; cursor: pointer; font-size: 0.95rem;
+    }
+    button:hover { background: #ffbe33; }
+
+    .msg { margin-top: 10px; font-size: 0.85rem; padding: 8px; border-radius: 6px; }
+    .ok  { background: #1a3a1a; color: #6fcf6f; }
+    .err { background: #3a1a1a; color: #cf6f6f; }
+
+    /* Wallet table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th { color: #f0a500; text-align: left; padding: 6px 4px; border-bottom: 1px solid #3a3a5a; }
+    td { padding: 7px 4px; border-bottom: 1px solid #1f1f3a; }
+
+    /* Chain blocks */
+    .block {
+      background: #0f0f1a; border: 1px solid #3a3a5a;
+      border-radius: 8px; padding: 12px; margin-bottom: 12px;
+      font-size: 0.8rem; font-family: monospace;
+    }
+    .block .bindex { color: #f0a500; font-size: 1rem; font-weight: bold; margin-bottom: 6px; }
+    .block .hash   { color: #6fcf6f; word-break: break-all; }
+    .block .prev   { color: #aaa; word-break: break-all; }
+    .block .tx     { color: #7fbfff; margin-top: 6px; }
+
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; margin-bottom: 14px; }
+    .valid   { background: #1a3a1a; color: #6fcf6f; }
+    .invalid { background: #3a1a1a; color: #cf6f6f; }
+
+    footer { text-align: center; padding: 20px; color: #555; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>💰 NOOBCOIN</h1>
+  <p>A live blockchain demo — send virtual NBC, track wallets, explore blocks</p>
+</header>
+
+<div class="grid">
+
+  <!-- Register Wallet -->
+  <div class="card">
+    <h2>🆕 Create Wallet</h2>
+    <input id="regName" placeholder="Your name (e.g. Youtoob)" />
+    <input id="regBal" type="number" placeholder="Starting balance (default 100 NBC)" />
+    <button onclick="register()">Create Wallet</button>
+    <div id="regMsg" class="msg" style="display:none"></div>
+  </div>
+
+  <!-- Send NBC -->
+  <div class="card">
+    <h2>💸 Send NoobCoin</h2>
+    <input id="sendFrom" placeholder="From (wallet name)" />
+    <input id="sendTo"   placeholder="To (wallet name)" />
+    <input id="sendAmt"  type="number" placeholder="Amount (NBC)" />
+    <button onclick="sendNBC()">⛏ Mine & Send</button>
+    <div id="sendMsg" class="msg" style="display:none"></div>
+  </div>
+
+  <!-- All Wallets -->
+  <div class="card">
+    <h2>👛 All Wallets</h2>
+    <button onclick="loadWallets()" style="margin-bottom:12px">🔄 Refresh</button>
+    <table>
+      <thead><tr><th>Name</th><th>Balance (NBC)</th></tr></thead>
+      <tbody id="walletTable"><tr><td colspan="2" style="color:#555">Click refresh</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Chain Status -->
+  <div class="card">
+    <h2>🔗 Blockchain Explorer</h2>
+    <div id="chainStatus"></div>
+    <button onclick="loadChain()">🔄 Load Chain</button>
+    <div id="chainBlocks" style="margin-top:14px"></div>
+  </div>
+
+</div>
+
+<footer>NoobCoin — Built in pure Java · Educational purposes only · Not real money 😄</footer>
+
+<script>
+  const API = "";
+
+  async function register() {
+    const name = document.getElementById("regName").value.trim();
+    const bal  = document.getElementById("regBal").value || 100;
+    const res  = await fetch(`${API}/api/register?name=${encodeURIComponent(name)}&balance=${bal}`);
+    const data = await res.json();
+    showMsg("regMsg", data.message || data.error, data.success);
+    if (data.success) loadWallets();
+  }
+
+  async function sendNBC() {
+    const from = document.getElementById("sendFrom").value.trim();
+    const to   = document.getElementById("sendTo").value.trim();
+    const amt  = document.getElementById("sendAmt").value;
+    showMsg("sendMsg", "⛏ Mining block...", true);
+    const res  = await fetch(`${API}/api/send?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&amount=${amt}`);
+    const data = await res.json();
+    showMsg("sendMsg", data.message || data.error, data.success);
+    if (data.success) { loadWallets(); loadChain(); }
+  }
+
+  async function loadWallets() {
+    const res  = await fetch(`${API}/api/wallets`);
+    const data = await res.json();
+    const tb   = document.getElementById("walletTable");
+    tb.innerHTML = data.map(w =>
+      `<tr><td>${w.name}</td><td><b>${w.balance.toFixed(2)}</b></td></tr>`
+    ).join("");
+  }
+
+  async function loadChain() {
+    const sRes   = await fetch(`${API}/api/status`);
+    const status = await sRes.json();
+    document.getElementById("chainStatus").innerHTML =
+      `<span class="badge ${status.valid ? 'valid' : 'invalid'}">
+        ${status.valid ? '✔ Chain Valid' : '✘ Chain Tampered!'} · ${status.blocks} blocks
+      </span>`;
+
+    const res    = await fetch(`${API}/api/chain`);
+    const blocks = await res.json();
+    const container = document.getElementById("chainBlocks");
+    container.innerHTML = blocks.reverse().map(b => `
+      <div class="block">
+        <div class="bindex">Block #${b.index}</div>
+        <div class="hash">🔐 ${b.hash.substring(0,32)}...</div>
+        <div class="prev">⬆ Prev: ${b.prevHash.substring(0,20)}...</div>
+        <div class="tx">${b.transactions.length === 0
+          ? '📦 Genesis Block'
+          : b.transactions.map(t =>
+              `💸 ${t.sender} → ${t.receiver} : ${t.amount} NBC @ ${t.time}`
+            ).join('<br>')
+        }</div>
+      </div>
+    `).join("");
+  }
+
+  function showMsg(id, text, ok) {
+    const el = document.getElementById(id);
+    el.style.display = "block";
+    el.className = "msg " + (ok ? "ok" : "err");
+    el.textContent = text;
+  }
+
+  // Auto-load on start
+  loadWallets();
+  loadChain();
+</script>
+</body>
+</html>
