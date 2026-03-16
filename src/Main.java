@@ -1,15 +1,22 @@
 public class Main {
     public static void main(String[] args) throws Exception {
-        System.out.println("\n  Booting NoobCoin...");
+        System.out.println("\n╔══════════════════════════════════╗");
+        System.out.println("║     💰  N O O B C O I N  💰      ║");
+        System.out.println("╚══════════════════════════════════╝");
+        System.out.println("\n  Booting blockchain...\n");
 
         Blockchain chain = new Blockchain();
 
-        // Seed wallets so new visitors aren't empty
-        Wallet.createWallet("Alice", 1000);
-        Wallet.createWallet("Bob", 500);
-        Wallet.createWallet("Charlie", 750);
+        // Seed wallets
+        Wallet.createWallet("Alice",   1000);
+        Wallet.createWallet("Bob",      500);
+        Wallet.createWallet("Charlie",  750);
+
+        // Use PORT env var for Render, fallback to 8080 locally
+        String portEnv = System.getenv("PORT");
+        int port = (portEnv != null) ? Integer.parseInt(portEnv) : 8080;
 
         NoobCoinServer server = new NoobCoinServer(chain);
-        server.start(8080);
+        server.start(port);
     }
 }

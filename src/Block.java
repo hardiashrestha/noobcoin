@@ -1,6 +1,6 @@
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Date;
-import java.security.MessageDigest;
 import java.util.List;
 
 public class Block {
@@ -30,7 +30,6 @@ public class Block {
         }
     }
 
-    // Proof-of-Work mining
     public void mineBlock(int difficulty) {
         String target = new String(new char[difficulty]).replace('\0', '0');
         while (!hash.substring(0, difficulty).equals(target)) {
