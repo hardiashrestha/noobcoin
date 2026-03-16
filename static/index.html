@@ -203,7 +203,7 @@
     document.getElementById("myWalletFull").textContent = name;
     document.getElementById("sendFrom").value = name;
     // Auto-register (server ignores if already exists)
-    await fetch(`${API}/api/register?name=${encodeURIComponent(name)}&balance=100`);
+    await fetch(`${API}/api/register?name=${encodeURIComponent(name)}&balance=10000`);
     loadWallets();
     loadChain();
     loadMyBalance();

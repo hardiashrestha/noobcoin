@@ -8,9 +8,9 @@ public class Main {
         Blockchain chain = new Blockchain();
 
         // Seed wallets
-        Wallet.createWallet("Alice",   1000);
-        Wallet.createWallet("Bob",      500);
-        Wallet.createWallet("Charlie",  750);
+        Wallet.createWallet("Shrestha",   10000);
+        Wallet.createWallet("Bob",      7500);
+        Wallet.createWallet("Kushaal",  7000);
 
         // Use PORT env var for Render, fallback to 8080 locally
         String portEnv = System.getenv("PORT");
