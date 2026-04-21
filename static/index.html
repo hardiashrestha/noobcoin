@@ -97,7 +97,37 @@
     .explain-box span { color: #f0a500; font-weight: bold; }
 
     footer { text-align: center; padding: 20px; color: #555; font-size: 0.8rem; }
-  </style>
+  .form-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.form-row input,.form-row select{flex:1;min-width:110px;padding:8px 10px;border-radius:6px;border:1px solid #333;background:#1e2030;color:#fff}.form-row button{padding:8px 16px;background:#f0a500;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+      /* ---- Coin Exchange Styles ---- */
+      .coin-row { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+      .coin-row input, .coin-row select {
+        flex:1; min-width:130px; padding:9px 12px;
+        border-radius:8px; border:1px solid #2a2a4a;
+        background:#0f0f1a; color:#fff; font-size:.9rem;
+      }
+      .coin-row input:focus, .coin-row select:focus {
+        outline:none; border-color:#f0a500;
+      }
+      .coin-row select option { background:#0f0f1a; }
+      .btn-gold {
+        padding:9px 20px; background:#f0a500; color:#000;
+        border:none; border-radius:8px; cursor:pointer;
+        font-weight:700; font-size:.9rem; letter-spacing:.5px;
+        transition:background .2s;
+      }
+      .btn-gold:hover { background:#ffb700; }
+      .price-chip {
+        display:inline-flex; flex-direction:column; align-items:center;
+        background:#0f0f1a; border:1px solid #2a2a4a;
+        border-radius:10px; padding:10px 16px; min-width:90px;
+        transition:border-color .2s;
+      }
+      .price-chip:hover { border-color:#f0a500; }
+      .price-chip .sym { font-size:1rem; font-weight:700; color:#f0a500; }
+      .price-chip .nm  { font-size:.7rem; color:#666; margin:2px 0; }
+      .price-chip .usd { font-size:.9rem; color:#ccc; }
+
+    </style>
 </head>
 <body>
 
@@ -145,7 +175,7 @@
     <h2>👛 All Wallets (Global)</h2>
     <button onclick="loadWallets()" style="margin-bottom:12px">🔄 Refresh</button>
     <table>
-      <thead><tr><th>Name</th><th>Balance (NBC)</th></tr></thead>
+      <thead><tr><th>Name</th><th>Balance (NBC)</th><th>Mock Coin Holdings</th></tr></thead>
       <tbody id="walletTable">
         <tr><td colspan="2" style="color:#555">Click refresh</td></tr>
       </tbody>
@@ -286,5 +316,48 @@
 
   initWallet();
 </script>
-</body>
+<div class="card"><h2>&#x1FA99; Convert NBC to Mock Coin</h2><p style="color:#aaa;font-size:.85rem;margin:4px 0 12px">1 NBC = \$1 USD &bull; Deducts NBC from your wallet &bull; Credits mock coin balance</p><div id="myMockCoins" style="margin-top:8px;line-height:1.9"><span style="color:#555;font-size:.85rem">No mock coin holdings yet.</span></div><div class="coin-row"><input id="cw" placeholder="Wallet Name"/><input id="ca" type="number" placeholder="NBC Amount"/><select id="cc"><option value="BTC">BTC ~87000</option><option value="ETH">ETH ~1600</option><option value="SOL">SOL ~130</option><option value="BNB">BNB ~590</option><option value="XRP">XRP ~2.10</option><option value="DOGE">DOGE ~0.16</option><option value="ADA">ADA ~0.35</option></select><button class="btn-gold" onclick="doConvert()">&#x1FA99; Convert</button></div><div id="cr" style="margin-top:8px;font-size:.9rem;min-height:20px"></div></div><div class="card"><h2>&#x1F4E4; Send NBC &rarr; Receiver gets Mock Coin</h2><p style="color:#aaa;font-size:.85rem;margin:4px 0 12px">Sender pays in NBC &bull; Receiver gets equivalent mock coin credited to their wallet</p><div class="coin-row"><input id="sf" placeholder="Sender"/><input id="st" placeholder="Receiver"/><input id="sa" type="number" placeholder="NBC Amount"/><select id="sc"><option value="BTC">BTC</option><option value="ETH">ETH</option><option value="SOL">SOL</option><option value="BNB">BNB</option><option value="XRP">XRP</option><option value="DOGE">DOGE</option><option value="ADA">ADA</option></select><button class="btn-gold" onclick="doSendAs()">&#x1F4E4; Send as Coin</button></div><div id="sr" style="margin-top:8px;font-size:.9rem;min-height:20px"></div></div><div class="section"><h2>Mock Coin Prices</h2><div id="pg" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px"></div></div><script>function doConvert(){var w=document.getElementById("cw").value,a=document.getElementById("ca").value,c=document.getElementById("cc").value,r=document.getElementById("cr");r.textContent="Converting...";fetch("/api/convert?wallet="+encodeURIComponent(w)+"&amount="+a+"&coin="+c).then(function(x){return x.json()}).then(function(d){r.style.color=d.success?"#4caf50":"#f44336";r.textContent=d.message;if(d.success)loadWallets()}).catch(function(e){r.textContent=e})}function doSendAs(){var f=document.getElementById("sf").value,t=document.getElementById("st").value,a=document.getElementById("sa").value,c=document.getElementById("sc").value,r=document.getElementById("sr");r.textContent="Sending...";fetch("/api/sendascoin?from="+encodeURIComponent(f)+"&to="+encodeURIComponent(t)+"&amount="+a+"&coin="+c).then(function(x){return x.json()}).then(function(d){r.style.color=d.success?"#4caf50":"#f44336";r.textContent=d.message;if(d.success)loadWallets()}).catch(function(e){r.textContent=e})}function loadPrices(){fetch("/api/prices").then(function(x){return x.json()}).then(function(d){var g=document.getElementById("pg"),out="";for(var s in d){var i=d[s];out+="<div class='price-chip'><div class='sym'>"+s+"</div><div class='nm'>"+i.name+"</div><div class='usd'>$"+i.price.toLocaleString()+"</div></div>"}g.innerHTML=out}).catch(function(){})}loadPrices();
+
+// ── Mock Coin Table Patch ──────────────────────────────────────────────────
+function patchWalletTableMockCoins(data) {
+  var tbl = document.getElementById("walletTable");
+  if (!tbl) return;
+  var rows = tbl.querySelectorAll("tbody tr");
+  rows.forEach(function(row) {
+    var nameCell = row.cells[0];
+    if (!nameCell) return;
+    var name = nameCell.textContent.replace(/^[^a-zA-Z0-9]*/, "").trim();
+    var wallet = data.find(function(w) { return w.name === name; });
+    if (!wallet) return;
+    if (row.cells.length < 3) {
+      var td = document.createElement("td");
+      row.appendChild(td);
+    }
+    var coins = wallet.mockCoins || {};
+    var keys = Object.keys(coins);
+    row.cells[2].innerHTML = keys.length
+      ? keys.map(function(k) {
+          return '<span style="background:#1a1d2e;border:1px solid #f0a500;border-radius:4px;padding:2px 6px;font-size:.75rem;color:#f0a500;margin:1px;display:inline-block">'
+            + k + ': ' + parseFloat(coins[k]).toFixed(6) + '</span>';
+        }).join(' ')
+      : '<span style="color:#555;font-size:.75rem">none</span>';
+  });
+}
+
+function updateMyMockCoins(wallet) {
+  var div = document.getElementById("myMockCoins");
+  if (!div) return;
+  var coins = (wallet && wallet.mockCoins) || {};
+  var keys = Object.keys(coins);
+  if (keys.length) {
+    div.innerHTML = '<strong style="color:#f0a500">Mock Holdings: </strong>'
+      + keys.map(function(k) {
+          return '<span style="background:#1a1d2e;border:1px solid #f0a500;border-radius:4px;padding:2px 8px;font-size:.8rem;color:#f0a500;margin:2px;display:inline-block">'
+            + k + ': ' + parseFloat(coins[k]).toFixed(6) + '</span>';
+        }).join('');
+  } else {
+    div.innerHTML = '<span style="color:#555;font-size:.85rem">No mock coin holdings yet. Use Convert or Send As Coin below.</span>';
+  }
+}
+</script></body>
 </html>

@@ -23,6 +23,9 @@ public class NoobCoinServer {
         server.createContext("/api/send",       this::handleSend);
         server.createContext("/api/register",   this::handleRegister);
         server.createContext("/api/status",     this::handleStatus);
+        server.createContext("/api/convert",    this::handleConvert);
+        server.createContext("/api/sendascoin", this::handleSendAsCoin);
+        server.createContext("/api/prices",     this::handlePrices);
 
         server.setExecutor(null);
         server.start();
@@ -132,6 +135,69 @@ public class NoobCoinServer {
         ex.sendResponseHeaders(code, bytes.length);
         ex.getResponseBody().write(bytes);
         ex.getResponseBody().close();
+    }
+
+
+    private void handlePrices(HttpExchange ex) throws IOException {
+        handleCors(ex);
+        sendJson(ex, 200, CoinConverter.getPricesJson());
+    }
+
+    private void handleConvert(HttpExchange ex) throws IOException {
+        handleCors(ex);
+        Map<String, String> params = parseQuery(ex.getRequestURI());
+        String wallet  = params.get("wallet");
+        String amtStr  = params.get("amount");
+        String coin    = params.get("coin");
+        if (wallet == null || amtStr == null || coin == null) {
+            sendJson(ex, 400, "{\"success\":false,\"message\":\"Missing params: wallet, amount, coin\"}");
+            return;
+        }
+        if (!CoinConverter.isValidCoin(coin.toUpperCase())) {
+            sendJson(ex, 400, "{\"success\":false,\"message\":\"Unknown coin: " + coin + "\"}");
+            return;
+        }
+        try {
+            float amount = Float.parseFloat(amtStr);
+            boolean ok = Wallet.convertNBCtoMock(wallet, amount, coin.toUpperCase(), chain);
+            if (ok) {
+                double received = CoinConverter.convertFromNBC(amount, coin.toUpperCase());
+                sendJson(ex, 200, "{\"success\":true,\"message\":\"Converted " + amount + " NBC to " + received + " mock-" + coin.toUpperCase() + "\",\"coinAmount\":" + received + "}");
+            } else {
+                sendJson(ex, 400, "{\"success\":false,\"message\":\"Conversion failed: check wallet name and balance\"}");
+            }
+        } catch (Exception e) {
+            sendJson(ex, 500, "{\"success\":false,\"message\":\"Error: " + e.getMessage() + "\"}");
+        }
+    }
+
+    private void handleSendAsCoin(HttpExchange ex) throws IOException {
+        handleCors(ex);
+        Map<String, String> params = parseQuery(ex.getRequestURI());
+        String from    = params.get("from");
+        String to      = params.get("to");
+        String amtStr  = params.get("amount");
+        String coin    = params.get("coin");
+        if (from == null || to == null || amtStr == null || coin == null) {
+            sendJson(ex, 400, "{\"success\":false,\"message\":\"Missing params: from, to, amount, coin\"}");
+            return;
+        }
+        if (!CoinConverter.isValidCoin(coin.toUpperCase())) {
+            sendJson(ex, 400, "{\"success\":false,\"message\":\"Unknown coin: " + coin + "\"}");
+            return;
+        }
+        try {
+            float amount = Float.parseFloat(amtStr);
+            boolean ok = Wallet.sendFundsAsCoin(from, to, amount, coin.toUpperCase(), chain);
+            if (ok) {
+                double received = CoinConverter.convertFromNBC(amount, coin.toUpperCase());
+                sendJson(ex, 200, "{\"success\":true,\"message\":\"Sent " + amount + " NBC from " + from + " → " + to + " as " + received + " mock-" + coin.toUpperCase() + "\",\"coinAmount\":" + received + "}");
+            } else {
+                sendJson(ex, 400, "{\"success\":false,\"message\":\"Send failed: check wallet names and balance\"}");
+            }
+        } catch (Exception e) {
+            sendJson(ex, 500, "{\"success\":false,\"message\":\"Error: " + e.getMessage() + "\"}");
+        }
     }
 
     private Map<String, String> parseQuery(URI uri) {
